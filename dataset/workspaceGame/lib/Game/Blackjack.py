@@ -40,7 +40,7 @@ class BlackjackGame:
         numbers = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
         suits = ['hearts', 'diamonds', 'clubs', 'spades']
         deck = [{'number': number, 'suit': suit} for number in numbers for suit in suits]
-        deck = deck * 6
+        deck = deck * 7
         return deck
 
     def deal_card(self):

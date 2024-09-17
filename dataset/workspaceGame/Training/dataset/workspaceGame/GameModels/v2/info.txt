@@ -1,0 +1,7 @@
+batchSize: 32 
+gamma: 0.95 
+epsilon: 0.9 
+epsilonMin: 0.05 
+annelingSteps: 10000 
+learningRate: 2 
+layers: 256 

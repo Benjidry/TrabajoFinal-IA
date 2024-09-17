@@ -8,11 +8,12 @@ class BJEnvironment(gym.Env):
     def __init__(self):
         self.game = BlackjackGame()
         self.deck_min_len = 109
-
+        self.cart_counting = 0
         # player_sum, dealer_sum, usable_ace, has_double, prob_21, game_state
         # game_state = 0 normal, 1 double
         # 2 split. Not available in this version
         self.state_size = 6
+        self.used_carts =[]
         # Hit, Stand, Double, Split
         self.action_size = 3
         self.observation_space = spaces.Box(low=np.array([4,2,0,0,0,0]), high=np.array([30,26,1,1,10,1]), shape=(self.state_size,), dtype=np.uint8)
@@ -77,19 +78,15 @@ class BJEnvironment(gym.Env):
 
         print(self.game.game_result())
 
-        # print("END")
-
-        # print("Player Cards:")
-        # rint(self.game.format_cards(self.game.player_hand), "   ", self.game.hand_value(self.game.player_hand))
-
-        # print("Dealer Cards:")
-        # print(self.game.format_cards(self.game.dealer_hand), "   ", self.game.hand_value(self.game.dealer_hand))
         return state, action, reward, self.get_obs(), True
 
     def get_obs(self):
         # player_sum, dealer_sum, usable_ace, split_pos, double_pos, prob_21, game_state
         player_sum = self.game.hand_value(self.game.player_hand)
         dealer_card = self.game.hand_value(self.game.dealer_hand)
+        hilo_counting_start(self.game.player_hand)
+        hilo_counting_start(self.game.dealer_hand[1])
+
         if self.game.firstTurn:
             dealer_card = self.game.hand_value(self.game.dealer_hand[:1])
         usable_ace = self.has_usable_ace(self.game.player_hand)
@@ -100,7 +97,7 @@ class BJEnvironment(gym.Env):
         has_double = self.game.firstTurn
         prob_21 = self.game.get_prob_of_bust(self.used_carts)
         game_state = self.game.status
-
+        hilo
         if game_state == 2 and player_sum > 21:
             player_sum = self.game.hand_value(self.game.splitted_hands[1])
 
@@ -109,7 +106,7 @@ class BJEnvironment(gym.Env):
                 player_sum,
                 dealer_card,
                 usable_ace,
-                #has_split,
+                #has_split,a
                 has_double,
                 prob_21,
                 game_state,
@@ -118,6 +115,27 @@ class BJEnvironment(gym.Env):
         state = state.astype(np.uint8)
         state = np.reshape(state, [1, self.state_size])
         return state
+
+    def obtain_values(carta):
+        value = 0
+
+        if carta in ['2', '3', '4', '5', '6']:
+            value = 1
+        elif carta in ['7', '8', '9']:
+            value = 0
+        elif carta in ['10', 'J', 'Q', 'K', 'A']:
+            value = -1
+        else:
+            value = 0
+        return value
+
+    def hilo_counting_start(carts):
+    
+        for cart in carts:
+            count += obtain_values(cart['number'])
+
+        return count
+
 
     def reset(self, bet):
 
