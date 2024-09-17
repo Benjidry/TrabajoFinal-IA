@@ -48,12 +48,13 @@ class BlackjackGame:
 
     # fucion para empezar el juego, donde se crean las manos de los jugadores
     def start_game(self, bet):
+        self.lastTurn = False
         self.firstTurn = True
         self.splitted_done = False
         self.player_hand = [self.deal_card(), self.deal_card()]
         self.dealer_hand = [self.deal_card(), self.deal_card()]
         self.bet_game = bet #se incializa la variable apuesta que es introducida como un parametro
-        self.splitted_hands = []  
+        self.splitted_hands =  []  
         self.current_hand_index = 0
         self.status = 0
         self.badMove = False
@@ -83,6 +84,7 @@ class BlackjackGame:
 
     # todas las acciones que puede realizar el jugador
     def player_action(self, action):
+        self.firstTurn = False # Apenas el jugador haga una accion debemos dejar firstTurn como falso
         # "Hit" automaticamente se introduce una carta de la baraja a la mano del jugador y se borra una carta del array del mazo.
         if action == "hit":
             self.player_hand.append(self.deal_card())
@@ -114,6 +116,7 @@ class BlackjackGame:
                 self.badMove = True
 
         if action == "stay" or self.game_status[0] == "stay" and self.game_status[1] == "continue":
+            self.lastTurn = True
             self.dealer_action()
             self.check_winner()
             return action, self.game_status[1]
@@ -233,41 +236,6 @@ class BlackjackGame:
             result += f"{card['number']}{suit} "
 
         return result.strip()
-
-    def get_prob_of_bust(self, remaining_deck):
-        value_needed = 21 - self.hand_value(self.player_hand)
-        # if value_needed < 0:
-        #    return -1
-        # if value_needed == 0:
-        #    return 100  # Si ya está en 21 o más, la probabilidad de volar es del 100%
-        # busting_cards = 0
-        # for card in remaining_deck:
-        #    card_value = card['number']
-        #    if card_value in ['J', 'Q', 'K']:
-        #        card_value = 10
-        #    elif card_value == 'A':
-        #        card_value = 11
-        #    else:
-        #        card_value = int(card_value)
-
-        #    if card_value > value_needed:
-        #        busting_cards += 1
-
-        # total_cards = len(remaining_deck)
-        # probability_of_bust = (busting_cards / total_cards) * 100
-        # probability_of_bust = probability_of_bust/10
-
-        probability_of_bust = 100 * value_needed / 21
-        
-        if probability_of_bust < 0:
-            probability_of_bust = 0
-                   
-        probability_of_bust = probability_of_bust / 10
-
-        probability_of_bust = round(probability_of_bust)
-        probability_of_bust = abs(probability_of_bust)
-
-        return int(probability_of_bust)
 
 def main():
     game = BlackjackGame()

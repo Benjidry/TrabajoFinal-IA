@@ -48,7 +48,7 @@ class BJEnvironment(gym.Env):
         status = self.game.player_action(act_string)
 
         reward = 0
-        done = 0
+        done = False
 
         bet = self.game.return_bounty(self.bet, act_string)
 
@@ -56,11 +56,9 @@ class BJEnvironment(gym.Env):
             self.set_deck_per_game()
 
         if status[1] == "continue":
-
             if self.game.badMove:
                 reward = -5
                 done = True
-
             return state, action, reward, self.get_obs(), done
 
         # Si cuando el jugador o el dealer tienen 21 en la primera no obtiene recompensa
@@ -81,23 +79,25 @@ class BJEnvironment(gym.Env):
         return state, action, reward, self.get_obs(), True
 
     def get_obs(self):
-        # player_sum, dealer_sum, usable_ace, split_pos, double_pos, prob_21, game_state
+        """
+        Devuelve la observación del estado del juego.
+        Durante el turno del jugador, solo muestra la primera carta del dealer.
+        Después del turno del jugador (cuando `lastTurn` es True), muestra todas las cartas del dealer.
+        """
         player_sum = self.game.hand_value(self.game.player_hand)
-        dealer_card = self.game.hand_value(self.game.dealer_hand)
-        hilo_counting_start(self.game.player_hand)
-        hilo_counting_start(self.game.dealer_hand[1])
 
-        if self.game.firstTurn:
+        # Mostrar solo la primera carta del dealer mientras el jugador aún no ha terminado su turno
+        if not self.game.lastTurn:
             dealer_card = self.game.hand_value(self.game.dealer_hand[:1])
+        else:
+            # Mostrar todas las cartas del dealer cuando el turno ha terminado
+            dealer_card = self.game.hand_value(self.game.dealer_hand)
+
         usable_ace = self.has_usable_ace(self.game.player_hand)
-        # has_split = (
-        #    len(self.game.player_hand) == 2
-        #    and self.game.player_hand[0]["number"] == self.game.player_hand[1]["number"]
-        # )
         has_double = self.game.firstTurn
-        prob_21 = self.game.get_prob_of_bust(self.used_carts)
         game_state = self.game.status
-        hilo
+
+        # Si el jugador ha hecho split y la primera mano se ha pasado, mostrar la segunda mano
         if game_state == 2 and player_sum > 21:
             player_sum = self.game.hand_value(self.game.splitted_hands[1])
 
@@ -106,9 +106,7 @@ class BJEnvironment(gym.Env):
                 player_sum,
                 dealer_card,
                 usable_ace,
-                #has_split,a
                 has_double,
-                prob_21,
                 game_state,
             ]
         )
@@ -146,8 +144,11 @@ class BJEnvironment(gym.Env):
 
         if (len(self.game.get_deck()) <= self.deck_min_len):
             self.game.regenerate_deck()
+            self.cart_counting = 0
 
         self.game.start_game(self.bet)
+        hilo_counting_start(self.game.player_hand)
+        hilo_counting_start(self.game.dealer_hand[0])
 
         self.status = ["act", "continue"]
 
