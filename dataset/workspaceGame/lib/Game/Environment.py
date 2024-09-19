@@ -92,10 +92,12 @@ class BJEnvironment(gym.Env):
         else:
             # Mostrar todas las cartas del dealer cuando el turno ha terminado
             dealer_card = self.game.hand_value(self.game.dealer_hand)
+            self.cart_counting += self.hilo_counting(self.game.dealer_hand[1:])
 
         usable_ace = self.has_usable_ace(self.game.player_hand)
         has_double = self.game.firstTurn
         game_state = self.game.status
+        h_counting = self.cart_counting
 
         # Si el jugador ha hecho split y la primera mano se ha pasado, mostrar la segunda mano
         if game_state == 2 and player_sum > 21:
@@ -106,6 +108,7 @@ class BJEnvironment(gym.Env):
                 player_sum,
                 dealer_card,
                 usable_ace,
+                h_counting,
                 has_double,
                 game_state,
             ]
@@ -114,7 +117,7 @@ class BJEnvironment(gym.Env):
         state = np.reshape(state, [1, self.state_size])
         return state
 
-    def obtain_values(carta):
+    def obtain_values(self, carta):
         value = 0
 
         if carta in ['2', '3', '4', '5', '6']:
@@ -127,12 +130,17 @@ class BJEnvironment(gym.Env):
             value = 0
         return value
 
-    def hilo_counting_start(carts):
-    
+    def hilo_counting(self, carts):
+        count = 0
         for cart in carts:
-            count += obtain_values(cart['number'])
-
-        return count
+        # Asegurarte de que cada 'cart' es un diccionario y contiene la clave 'number'
+            if isinstance(cart, dict) and 'number' in cart:
+                count += self.obtain_values(cart['number'])
+            else:
+                print(f"Error: Carta no válida {cart}")
+                continue  # Saltar este elemento si no es válido
+    
+        return int(count)
 
 
     def reset(self, bet):
@@ -147,8 +155,8 @@ class BJEnvironment(gym.Env):
             self.cart_counting = 0
 
         self.game.start_game(self.bet)
-        hilo_counting_start(self.game.player_hand)
-        hilo_counting_start(self.game.dealer_hand[0])
+        self.cart_counting += self.hilo_counting(self.game.player_hand)
+        self.cart_counting += self.hilo_counting(self.game.dealer_hand[0])
 
         self.status = ["act", "continue"]
 
